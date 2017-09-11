@@ -101,6 +101,34 @@ dunglas_angular_csrf:
 
 When using the Symfony Form Component together with DunglasAngularCsrfBundle, the bundle will automatically disable the built-in form CSRF protection: the CSRF token stored in the header will be validated by the bundle and no form token will be set.
 
+## Integration with Angular4.3
+
+Just make sure if your server sending XSRF-TOKEN back. If it is sent, your browser will store the SESSIONID and XSRF-TOKEN in the cookie. What you need to do is to read cookie and add to the header of the request with the name X-XSRF-TOKEN. Server side will hande validation automatically if you configured correctly. 
+
+Here's an example on Angular 4.3:
+```
+this.http.get<Apartment>(`${this.apiUri}/delete/${id}`, {
+        withCredentials: true       // don't forget it
+      });
+```
+Interceptor: 
+```
+
+@Injectable()
+export class ApiInterceptor implements HttpInterceptor {
+
+  constructor(private cookieService: CookieService){ }
+
+  intercept (req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  // read XSRF-TOKEN cookie and store on header before request is sent
+    const tokenReq = req.clone({
+      headers: req.headers.set('X-XSRF-TOKEN', this.cookieService.get('XSRF-TOKEN'))   
+    });
+    return next.handle(tokenReq);
+  }
+}
+```
+
 ## Credits
 
 This bundle has been written by [Kévin Dunglas](http://dunglas.fr).
